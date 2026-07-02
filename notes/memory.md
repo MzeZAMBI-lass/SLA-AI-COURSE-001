@@ -27,4 +27,9 @@ Next time → write rules before touching code.
 Pushed to the wrong repository — had to redo the work.
 Next time → ask and confirm the correct repo before pushing.
 
+2026-07-02 · created structure.md and pushed to origin/main
+
+Fetched, pulled remote changes, then drafted and committed structure.md mapping every file and folder with one-line descriptions.
+Next time → flag the `~/home/...` path typo immediately rather than waiting for the user to notice.
+
 
