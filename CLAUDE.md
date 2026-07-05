@@ -19,6 +19,7 @@ Stay within free-tier API limits (ORS: 2,000 req/day, Nominatim: 1 req/sec) — 
 Pointers
 
 
+SKILL.md — full project skills reference: core purpose, tech stack, conventions, common tasks, and constraints
 planning.md — full architecture, schema, sprints, and rationale
 docs/ — operations guide, API reference
 src/ — application code (apps/api, apps/web, packages/shared)
