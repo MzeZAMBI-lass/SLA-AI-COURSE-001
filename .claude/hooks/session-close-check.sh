@@ -4,7 +4,7 @@
 
 UNCOMMITTED=$(git status --porcelain 2>/dev/null | grep -v '^\?\?' | wc -l)
 UNTRACKED=$(git status --porcelain 2>/dev/null | grep '^\?\?' | wc -l)
-UNPUSHED=$(git log --oneline origin/main..HEAD 2>/dev/null | wc -l)
+UNPUSHED=$(git log --oneline @{u}..HEAD 2>/dev/null | wc -l)
 
 ISSUES=0
 
