@@ -123,6 +123,15 @@ bd dep add <child-id> <parent-id>
 #      → store in student_locations (PostGIS geometry)
 ```
 
+### Daily wrap-up
+```bash
+# Run at end of session — agent reads notes/, beads, and git log, then writes log/YYYY-MM-DD.md
+# Invoke via:
+claude --agent daily-wrapup
+# Output: log/2026-07-09.md with three sections: Done, Doing, Next + Notes from notes/
+# See .claude/agents/daily-wrapup.md for full steps and output template
+```
+
 ### Mandatory session close
 ```bash
 git status                     # Verify what changed

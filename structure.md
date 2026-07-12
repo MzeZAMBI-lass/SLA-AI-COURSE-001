@@ -15,12 +15,16 @@ SLA-AI-COURSE-001/
 │   ├── agents/             → autonomous agent definitions
 │   │   ├── sprint-planner.md  → reads planning.md §16, creates/audits sprint issues in beads
 │   │   ├── health-check.md    → daily audit: bd doctor, stale/orphans, git status, dolt push
-│   │   └── session-close.md   → enforces mandatory close protocol (commit → push → verify)
+│   │   ├── session-close.md   → enforces mandatory close protocol (commit → push → verify)
+│   │   └── daily-wrapup.md    → end-of-session summary: reads notes/, beads, git log → log/
 │   └── hooks/              → shell scripts invoked by Claude Code hooks
 │       └── session-close-check.sh  → Stop hook: warns on uncommitted or unpushed work
 │
 ├── notes/                  → session notes and persistent memory
 │   └── memory.md           → dated lessons learned, kept across sessions
+│
+├── log/                    → daily wrap-up summaries written by daily-wrapup agent
+│   └── YYYY-MM-DD.md       → one file per day: done / doing / next
 │
 ├── example_Activities/     → course activity examples and reference material
 │   └── agent_loop.md       → explains the agent loop with the Ayesha example
