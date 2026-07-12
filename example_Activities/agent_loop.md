@@ -1,5 +1,11 @@
 # The Agent Loop
 
+## Chatbot vs. Agent
+
+A **chatbot** is stateless and reactive: it waits for a user to send a message, replies once, and forgets the exchange the moment the conversation ends. It has no memory of past interactions, no ongoing goals, and no ability to act in the world on its own. A **agent**, by contrast, is stateful and proactive. It maintains a memory of what has happened, pursues a goal across multiple steps, and can take actions — sending messages, querying databases, triggering workflows — without waiting to be asked. Where a chatbot answers, an agent *works*.
+
+---
+
 An agent loop is how an AI agent thinks and acts over time. It does not just act once — it keeps going, learning from what happened, and trying to do better.
 
 The loop has five steps: **Observe, Decide, Act, Get Feedback, and Improve.**
