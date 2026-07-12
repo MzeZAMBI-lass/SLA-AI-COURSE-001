@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: sla-transport-api
+    runtime: node
+    rootDir: apps/api
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: APP_URL
+        sync: false   # Set in Render dashboard — your Vercel frontend URL
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: WHATSAPP_WEBHOOK_SECRET
+        sync: false
+      - key: ORS_API_KEY
+        sync: false
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: SCHOOL_LATITUDE
+        value: "-3.7321"
+      - key: SCHOOL_LONGITUDE
+        value: "36.6858"
+      - key: SCHOOL_START_TIME
+        value: "07:30"
+      - key: MAX_SERVICE_DISTANCE_KM
+        value: "50"

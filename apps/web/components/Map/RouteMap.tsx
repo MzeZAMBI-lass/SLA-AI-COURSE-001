@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { createBrowserClient } from '@/lib/supabase';
 
@@ -13,75 +13,106 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-const ROUTE_COLOURS = [
-  '#2563eb', '#16a34a', '#dc2626', '#9333ea', '#ea580c', '#0891b2',
-];
+const ROUTE_COLOURS = ['#2563eb', '#16a34a', '#dc2626', '#9333ea', '#ea580c', '#0891b2'];
 
 const SCHOOL_LAT = parseFloat(process.env.NEXT_PUBLIC_SCHOOL_LATITUDE ?? '-3.7321');
 const SCHOOL_LON = parseFloat(process.env.NEXT_PUBLIC_SCHOOL_LONGITUDE ?? '36.6858');
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 interface StudentPin {
   student_id: string;
-  student_name: string;
-  latitude: number;
-  longitude: number;
-  route_id: string;
-  route_name: string;
-  road_distance_km: number | null;
+  student_name?: string;
+  students?: { name: string; grade: string | null };
+  latitude?: number;
+  longitude?: number;
+  student_locations?: Array<{ latitude: number; longitude: number; road_distance_km: number | null }>;
+  route_id?: string;
+  route_name?: string;
   estimated_pickup_time: string | null;
-  grade: string | null;
 }
 
 interface RouteMapProps {
   selectedRouteId: string | null;
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+function colourForRoute(index: number): string {
+  return ROUTE_COLOURS[index % ROUTE_COLOURS.length];
+}
+
+function makeIcon(colour: string) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:12px;height:12px;border-radius:50%;background:${colour};border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4)"></div>`,
+    iconSize: [12, 12],
+    iconAnchor: [6, 6],
+  });
+}
 
 export default function RouteMap({ selectedRouteId }: RouteMapProps) {
   const supabase = createBrowserClient();
-  const pinsRef = useRef<StudentPin[]>([]);
+  const [pins, setPins] = useState<StudentPin[]>([]);
+  const [routeIndexMap, setRouteIndexMap] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    async function load() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {};
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+
+      const url = selectedRouteId
+        ? `${API}/api/routes/${selectedRouteId}/students`
+        : `${API}/api/students`;
+
+      const res = await fetch(url, { headers });
+      if (!res.ok) return;
+      const data = await res.json() as StudentPin[];
+      setPins(data);
+
+      // Build stable colour index map
+      const ids = [...new Set(data.map((p) => p.route_id).filter(Boolean))] as string[];
+      const map: Record<string, number> = {};
+      ids.forEach((id, i) => { map[id] = i; });
+      setRouteIndexMap(map);
+    }
+    load();
+  }, [selectedRouteId]);
 
   return (
-    <MapContainer
-      center={[SCHOOL_LAT, SCHOOL_LON]}
-      zoom={13}
-      style={{ height: '100%', width: '100%' }}
-    >
+    <MapContainer center={[SCHOOL_LAT, SCHOOL_LON]} zoom={13} style={{ height: '100%', width: '100%' }}>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {/* School marker */}
+      {/* School */}
       <Marker position={[SCHOOL_LAT, SCHOOL_LON]}>
-        <Popup>
-          <strong>Silverleaf Academy</strong>
-        </Popup>
+        <Popup><strong>Silverleaf Academy</strong></Popup>
       </Marker>
 
-      <StudentPins selectedRouteId={selectedRouteId} />
+      {/* Students */}
+      {pins.map((pin) => {
+        const lat = pin.latitude ?? pin.student_locations?.[0]?.latitude;
+        const lon = pin.longitude ?? pin.student_locations?.[0]?.longitude;
+        if (!lat || !lon) return null;
+
+        const colour = pin.route_id ? colourForRoute(routeIndexMap[pin.route_id] ?? 0) : '#6b7280';
+        const name = pin.student_name ?? pin.students?.name ?? 'Unknown';
+        const grade = pin.students?.grade;
+        const dist = pin.student_locations?.[0]?.road_distance_km;
+
+        return (
+          <Marker key={pin.student_id} position={[lat, lon]} icon={makeIcon(colour)}>
+            <Popup>
+              <strong>{name}</strong>
+              {grade && <div className="text-xs text-gray-500">Grade {grade}</div>}
+              {dist && <div className="text-xs">Distance: {dist.toFixed(1)} km</div>}
+              {pin.estimated_pickup_time && (
+                <div className="text-xs">Pickup: {pin.estimated_pickup_time}</div>
+              )}
+            </Popup>
+          </Marker>
+        );
+      })}
     </MapContainer>
   );
-}
-
-function StudentPins({ selectedRouteId }: { selectedRouteId: string | null }) {
-  const supabase = createBrowserClient();
-  const [pins, setPins] = ([] as StudentPin[], () => {});
-
-  useEffect(() => {
-    async function load() {
-      const { data: { session } } = await supabase.auth.getSession();
-      const url = selectedRouteId
-        ? `${API}/api/routes/${selectedRouteId}/students`
-        : `${API}/api/students`;
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-      });
-      if (res.ok) setPins(await res.json() as StudentPin[]);
-    }
-    load();
-  }, [selectedRouteId]);
-
-  return null;
 }

@@ -4,7 +4,7 @@
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace=apps/api\" \"npm run dev --workspace=apps/web\"",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace=packages/shared && npm run build --workspace=apps/api && npm run build --workspace=apps/web",
     "lint": "eslint apps packages --ext .ts,.tsx",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "tsc --noEmit -p tsconfig.base.json"
