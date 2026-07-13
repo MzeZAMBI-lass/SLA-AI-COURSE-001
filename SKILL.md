@@ -1,5 +1,9 @@
 # Project Skills: SLA-AI-COURSE-001
 
+> **This file is the project-wide reference** — purpose, stack, conventions, common tasks, and gotchas.
+> For step-by-step task recipes, see `skills/` (e.g. `skills/geocode-student-address.md`).
+> Those per-task files are not a substitute for this document.
+
 ## 1. Project Core
 
 **System**: Automated School Transport Route Planning for Silverleaf Academy

@@ -4,6 +4,12 @@ SLA-AI-COURSE-001/
 ├── CLAUDE.md               → project instructions, hard rules, and stack decisions
 ├── AGENTS.md               → guidance for AI agents working in this repo
 ├── SKILL.md                → project skills reference: core, stack, conventions, tasks, constraints
+├── AI-SKILLS-REFLECTION.md → one-page reflection on why skills and agents exist
+├── skills/                 → per-task recipe skills (not a substitute for SKILL.md)
+│   ├── parse-whatsapp-location.md
+│   ├── geocode-student-address.md
+│   ├── add-api-endpoint.md
+│   └── review-route-assignment.md
 ├── planning.md             → full architecture, schema, sprints, and rationale
 ├── decisions.md            → decision log — what we chose, why, and what we ruled out
 ├── structure.md            → this file — directory map and purpose of each folder

@@ -7,26 +7,24 @@ This project uses **bd** (beads) for issue tracking. Run `bd prime` for full wor
 | File | Purpose |
 |------|---------|
 | [SKILL.md](SKILL.md) | **Start here** — project purpose, tech stack, coding conventions, common tasks, and constraints |
+| `skills/` | Per-task recipes (e.g. geocoding, webhook parsing) — not a substitute for `SKILL.md` |
+| [AI-SKILLS-REFLECTION.md](AI-SKILLS-REFLECTION.md) | One-page reflection on why these skills and agents exist |
 | [CLAUDE.md](CLAUDE.md) | Hard rules, stack decisions, and workflow pointers |
 | [planning.md](planning.md) | Full architecture, schema, sprints, and rationale |
 | [structure.md](structure.md) | Directory map and where to find things |
 | [decisions.md](decisions.md) | Architecture decision log (what / why / ruled out) |
 | [.claude/SKILL.md](.claude/SKILL.md) | Claude Code workflow: beads commands, hooks, session close protocol |
+| `.claude/agents/` | Autonomous agent definitions (sprint-planner, health-check, etc.) |
 | `docs/` | Operations guide and API reference |
-| `src/` | Application code (`apps/api`, `apps/web`, `packages/shared`) |
+| `apps/` | Application code (`apps/api`, `apps/web`, `packages/shared`) |
 
-## Project documentation — read before coding
+## How AI agents should use this repo
 
-| File | Purpose |
-|------|---------|
-| [SKILL.md](SKILL.md) | **Start here** — project purpose, tech stack, coding conventions, common tasks, and constraints |
-| [CLAUDE.md](CLAUDE.md) | Hard rules, stack decisions, and workflow pointers |
-| [planning.md](planning.md) | Full architecture, schema, sprints, and rationale |
-| [structure.md](structure.md) | Directory map and where to find things |
-| [decisions.md](decisions.md) | Architecture decision log (what / why / ruled out) |
-| [.claude/SKILL.md](.claude/SKILL.md) | Claude Code workflow: beads commands, hooks, session close protocol |
-| `docs/` | Operations guide and API reference |
-| `src/` | Application code (`apps/api`, `apps/web`, `packages/shared`) |
+1. Read **SKILL.md** first for project-wide context — purpose, stack, conventions, and gotchas.
+2. Open a file in **skills/** when doing one specific recurring task (parse a WhatsApp message, geocode an address, add an endpoint).
+3. Use **`.claude/agents/`** for autonomous multi-step workflows (sprint planning, health checks, session close).
+4. Track all work in **beads** (`bd create`, `bd ready`, `bd close`) — never markdown TODO lists.
+5. Follow **CLAUDE.md** hard rules on privacy, API limits, and sprint order before writing code.
 
 > **Architecture in one line:** Issues live in a local Dolt database
 > (`.beads/dolt/`); cross-machine sync uses `bd dolt push/pull` (a
