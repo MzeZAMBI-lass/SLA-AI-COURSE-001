@@ -1,6 +1,9 @@
 -- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS postgis;
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS postgis WITH SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
+
+-- Expose PostGIS types in public search_path so GEOGRAPHY/GEOMETRY work unqualified
+SET search_path TO public, extensions;
 
 -- schools
 CREATE TABLE schools (
