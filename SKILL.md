@@ -5,7 +5,7 @@
 **System**: Automated School Transport Route Planning for Silverleaf Academy
 **Goal**: Reduce per-student bus route assignment from ~10 min to <30 sec by automating WhatsApp location ingestion, geocoding, road-distance calculation, and route assignment.
 
-**Current state**: Planning phase complete. No source code yet. Ready for Sprint 1 (monorepo scaffold + Supabase schema + auth).
+**Current state**: MVP scaffold in progress. Monorepo (`apps/api`, `apps/web`, `packages/shared`), Supabase schema, auth middleware, webhook/parser/geocoding/routing services, dashboard pages, and unit tests exist. Follow sprint order in `planning.md` §16 for remaining work.
 
 ### Automation Pipeline (7 steps)
 1. Parent sends WhatsApp message with home address, location pin, or Maps link

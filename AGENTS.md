@@ -2,6 +2,32 @@
 
 This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
 
+## Project documentation — read before coding
+
+| File | Purpose |
+|------|---------|
+| [SKILL.md](SKILL.md) | **Start here** — project purpose, tech stack, coding conventions, common tasks, and constraints |
+| [CLAUDE.md](CLAUDE.md) | Hard rules, stack decisions, and workflow pointers |
+| [planning.md](planning.md) | Full architecture, schema, sprints, and rationale |
+| [structure.md](structure.md) | Directory map and where to find things |
+| [decisions.md](decisions.md) | Architecture decision log (what / why / ruled out) |
+| [.claude/SKILL.md](.claude/SKILL.md) | Claude Code workflow: beads commands, hooks, session close protocol |
+| `docs/` | Operations guide and API reference |
+| `src/` | Application code (`apps/api`, `apps/web`, `packages/shared`) |
+
+## Project documentation — read before coding
+
+| File | Purpose |
+|------|---------|
+| [SKILL.md](SKILL.md) | **Start here** — project purpose, tech stack, coding conventions, common tasks, and constraints |
+| [CLAUDE.md](CLAUDE.md) | Hard rules, stack decisions, and workflow pointers |
+| [planning.md](planning.md) | Full architecture, schema, sprints, and rationale |
+| [structure.md](structure.md) | Directory map and where to find things |
+| [decisions.md](decisions.md) | Architecture decision log (what / why / ruled out) |
+| [.claude/SKILL.md](.claude/SKILL.md) | Claude Code workflow: beads commands, hooks, session close protocol |
+| `docs/` | Operations guide and API reference |
+| `src/` | Application code (`apps/api`, `apps/web`, `packages/shared`) |
+
 > **Architecture in one line:** Issues live in a local Dolt database
 > (`.beads/dolt/`); cross-machine sync uses `bd dolt push/pull` (a
 > git-compatible protocol), stored under `refs/dolt/data` on your git

@@ -26,7 +26,7 @@
       {
         "hooks": [
           {
-            "command": "bash /home/uphill/SLA-AI-COURSE-001/.claude/hooks/session-close-check.sh",
+            "command": "bash .claude/hooks/session-close-check.sh",
             "type": "command"
           }
         ],
