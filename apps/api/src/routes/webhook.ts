@@ -28,10 +28,11 @@ webhookRouter.post(
     // Acknowledge within 2 seconds — process async
     res.sendStatus(200);
 
+    const body = req.body as Record<string, unknown>;
+    const entry = (body?.['entry'] as Record<string, unknown>[])?.[0] as Record<string, unknown> | undefined;
+    const change = (entry?.['changes'] as Record<string, unknown>[])?.[0] as Record<string, unknown> | undefined;
     const messages: Record<string, unknown>[] =
-      (req.body as Record<string, unknown>)?.['entry']?.[0]?.['changes']?.[0]?.['value']?.[
-        'messages'
-      ] ?? [];
+      (change?.['value'] as Record<string, unknown>)?.['messages'] as Record<string, unknown>[] ?? [];
 
     for (const msg of messages) {
       const { error } = await supabase.from('incoming_messages').insert({

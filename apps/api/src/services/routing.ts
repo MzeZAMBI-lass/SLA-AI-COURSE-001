@@ -42,9 +42,8 @@ export async function calculateRoute(
         { headers: { Authorization: apiKey, 'Content-Type': 'application/json' } },
       );
 
-      const summary = (response.data as Record<string, unknown>)?.['routes']?.[0]?.['summary'] as
-        | Record<string, number>
-        | undefined;
+      const routes = (response.data as Record<string, unknown>)?.['routes'] as Record<string, unknown>[] | undefined;
+      const summary = routes?.[0]?.['summary'] as Record<string, number> | undefined;
 
       if (!summary) throw new Error('ORS returned empty summary');
 

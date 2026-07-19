@@ -2,9 +2,8 @@ services:
   - type: web
     name: sla-transport-api
     runtime: node
-    rootDir: apps/api
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: npm install && npm run build --workspace=packages/shared && npm run build --workspace=apps/api
+    startCommand: node apps/api/dist/index.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
