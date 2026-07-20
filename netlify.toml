@@ -1,0 +1,41 @@
+# Netlify configuration for SLA Transport System
+# Deploys both Next.js frontend and Express API on a single platform.
+#
+# Architecture:
+#   yoursite.netlify.app/          → Next.js (apps/web)
+#   yoursite.netlify.app/api/*     → Netlify Function wrapping Express (apps/api)
+#   yoursite.netlify.app/webhook   → same Function (WhatsApp webhook receiver)
+#   yoursite.netlify.app/health    → same Function (health check)
+
+[build]
+  # Build shared types, then API (for the function), then frontend
+  command = "npm install && npm run build --workspace=packages/shared && npm run build --workspace=apps/api && npm run build --workspace=apps/web"
+  publish = "apps/web/.next"
+
+# Required for Next.js App Router support on Netlify
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  directory = "netlify/functions"
+
+# Route all API calls and webhook to the Express function.
+# Netlify preserves the original request path in event.path, so
+# Express receives /api/students, /webhook, etc. exactly as configured.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/webhook"
+  to = "/.netlify/functions/api"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/api"
+  status = 200
+  force = true
