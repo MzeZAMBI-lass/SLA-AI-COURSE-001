@@ -8,18 +8,24 @@
 #   yoursite.netlify.app/health    → same Function (health check)
 
 [build]
-  command = "npm install && npm run build"
-  publish = "apps/web/.next"
+  # base tells the Next.js plugin where the app lives so it finds next.config.js
+  # and converts middleware.ts to a Netlify Edge Function correctly.
+  base = "apps/web"
+  # Go up to repo root to build workspace packages first, then build Next.js.
+  command = "cd ../../ && npm install && npm run build --workspace=packages/shared && npm run build --workspace=apps/api && cd - && npm run build"
+  # publish is relative to base, so this resolves to apps/web/.next
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
 
-# Required for Next.js App Router support on Netlify
+# Required for Next.js App Router + middleware (Edge Function) support on Netlify
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
 [functions]
-  directory = "netlify/functions"
+  # Relative to base (apps/web), so ../../netlify/functions = repo-root/netlify/functions
+  directory = "../../netlify/functions"
 
 # Route all API calls and webhook to the Express function.
 # Netlify preserves the original request path in event.path, so
