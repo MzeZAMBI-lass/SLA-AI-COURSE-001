@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createBrowserClient } from '@/lib/supabase';
+import { createBrowserClient } from '@/lib/supabase-client';
 import type { PendingAssignment } from '@sla/shared';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { createBrowserClient } from '@/lib/supabase';
+import { createBrowserClient } from '@/lib/supabase-client';
 import RouteList from '@/components/RouteList/RouteList';
 import type { Route } from '@sla/shared';
 
