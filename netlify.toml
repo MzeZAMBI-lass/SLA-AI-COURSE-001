@@ -8,9 +8,11 @@
 #   yoursite.netlify.app/health    → same Function (health check)
 
 [build]
-  # Build shared types, then API (for the function), then frontend
-  command = "npm install && npm run build --workspace=packages/shared && npm run build --workspace=apps/api && npm run build --workspace=apps/web"
+  command = "npm install && npm run build"
   publish = "apps/web/.next"
+
+[build.environment]
+  NODE_VERSION = "20"
 
 # Required for Next.js App Router support on Netlify
 [[plugins]]
