@@ -40,7 +40,7 @@
 | WhatsApp MVP | whatsapp-web.js | Pilot/test only — unofficial |
 | WhatsApp prod | 360dialog or Twilio | Official Business API — required for production |
 | Types | TypeScript (strict) | All packages |
-| Deploy | Render.com or Railway | + Supabase hosted |
+| Deploy | Netlify | Frontend + API (serverless) on one platform; Supabase hosted. See Decision 4. |
 
 ### Planned monorepo layout (from planning.md Appendix B)
 ```

@@ -45,6 +45,38 @@ What we ruled out:
 
 ---
 
+## Decision 4 — Deployment platform changed from Vercel + Render to Netlify (2026-07-20)
+
+We decided to consolidate all hosting onto Netlify: the Next.js frontend deploys via Netlify's
+native Next.js plugin, and the Express API runs as a Netlify Function wrapped with `serverless-http`.
+
+Why: The previous plan (Vercel for the frontend, Render.com for the API) required managing two separate
+platforms, two dashboards, and two deploy pipelines. The lead developer had no prior experience with
+either platform, which was stalling deployment progress. Netlify handles both from a single GitHub
+connection, has a simpler UI, and the free tier covers the project's needs.
+
+Architecture on Netlify:
+- `yoursite.netlify.app/`        → Next.js (apps/web) via @netlify/plugin-nextjs
+- `yoursite.netlify.app/api/*`   → Netlify Function wrapping Express (apps/api)
+- `yoursite.netlify.app/webhook` → same Function (WhatsApp webhook receiver)
+
+Key files added:
+- `netlify.toml` — build config and URL redirects
+- `netlify/functions/api.js` — one-file serverless wrapper using serverless-http
+- `serverless-http` added to apps/api dependencies
+
+What we ruled out:
+- Vercel + Render — two platforms, more friction for a team with no experience on either.
+- Railway — similar to Render but less documentation for monorepo setups.
+- Full rewrite to Next.js API routes — would require moving all Express business logic into
+  Next.js, significant refactoring effort with no functional benefit.
+
+Known limitation: Netlify Functions have a 10-second timeout on the free tier. The WhatsApp webhook
+receiver acknowledges quickly and queues work, so this is acceptable for the MVP. If synchronous
+geocoding+routing in a single request exceeds 10s in Phase 2, we upgrade to Netlify Background Functions.
+
+---
+
 ## Decision 3 — Tech stack is Node.js + Next.js + Supabase, not Python + Flask
 
 We decided to build the backend with Node.js and Express, the frontend with Next.js 14 and Tailwind CSS,
