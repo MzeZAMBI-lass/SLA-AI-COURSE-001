@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import LogoutButton from '@/components/LogoutButton';
 
 const NAV = [
   { href: '/dashboard/pending', label: 'Pending', badge: true },
@@ -12,7 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen flex flex-col">
       <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
         <span className="font-semibold text-gray-900">SLA Transport</span>
-        <nav className="flex gap-1">
+        <nav className="flex items-center gap-1">
           {NAV.map((item) => (
             <Link
               key={item.href}
@@ -22,6 +23,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {item.label}
             </Link>
           ))}
+          <LogoutButton />
         </nav>
       </header>
       <main className="flex-1 p-6">{children}</main>
