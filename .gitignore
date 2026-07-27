@@ -26,3 +26,6 @@ packages/shared/dist/
 
 # Local Netlify folder
 .netlify
+
+# Beads / Dolt files (added by bd init)
+.beads/proxieddb/
