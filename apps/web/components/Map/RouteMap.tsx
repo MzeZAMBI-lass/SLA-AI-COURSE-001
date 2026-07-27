@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { Fragment, useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import { createBrowserClient } from '@/lib/supabase-client';
+import type { RoutePath } from '@sla/shared';
 
 // Fix Leaflet default icon paths broken by webpack
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)['_getIconUrl'];
@@ -48,10 +49,20 @@ function makeIcon(colour: string) {
   });
 }
 
+function makeOriginIcon(colour: string) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:14px;height:14px;transform:rotate(45deg);background:${colour};border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4)"></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+  });
+}
+
 export default function RouteMap({ selectedRouteId }: RouteMapProps) {
   const supabase = createBrowserClient();
   const [pins, setPins] = useState<StudentPin[]>([]);
   const [routeIndexMap, setRouteIndexMap] = useState<Record<string, number>>({});
+  const [paths, setPaths] = useState<RoutePath[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -73,6 +84,17 @@ export default function RouteMap({ selectedRouteId }: RouteMapProps) {
       const map: Record<string, number> = {};
       ids.forEach((id, i) => { map[id] = i; });
       setRouteIndexMap(map);
+
+      // Fetch road-following path geometry for whichever routes are in view
+      const pathRouteIds = selectedRouteId ? [selectedRouteId] : ids;
+      const fetchedPaths = await Promise.all(
+        pathRouteIds.map(async (id) => {
+          const pathRes = await fetch(`${API}/api/routes/${id}/path`, { headers });
+          if (!pathRes.ok) return null;
+          return (await pathRes.json()) as RoutePath;
+        }),
+      );
+      setPaths(fetchedPaths.filter((p): p is RoutePath => p !== null));
     }
     load();
   }, [selectedRouteId]);
@@ -88,6 +110,34 @@ export default function RouteMap({ selectedRouteId }: RouteMapProps) {
       <Marker position={[SCHOOL_LAT, SCHOOL_LON]}>
         <Popup><strong>Silverleaf Academy</strong></Popup>
       </Marker>
+
+      {/* Route paths + origin points */}
+      {paths.map((path) => {
+        const colour = colourForRoute(routeIndexMap[path.route_id] ?? 0);
+        const positions = path.geometry.coordinates.map(([lon, lat]) => [lat, lon] as [number, number]);
+
+        return (
+          <Fragment key={path.route_id}>
+            <Polyline positions={positions} pathOptions={{ color: colour, weight: 4, opacity: 0.75 }}>
+              <Popup>
+                <strong>{path.route_name}</strong>
+                <div className="text-xs text-gray-500">
+                  {path.distance_km.toFixed(1)} km · {path.duration_min} min
+                </div>
+                {path.source === 'fallback' && (
+                  <div className="text-xs text-amber-600">Straight-line estimate (ORS unavailable)</div>
+                )}
+              </Popup>
+            </Polyline>
+            <Marker position={[path.origin.latitude, path.origin.longitude]} icon={makeOriginIcon(colour)}>
+              <Popup>
+                <strong>{path.route_name} — Origin</strong>
+                <div className="text-xs text-gray-500">~10 km from school</div>
+              </Popup>
+            </Marker>
+          </Fragment>
+        );
+      })}
 
       {/* Students */}
       {pins.map((pin) => {

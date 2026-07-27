@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { apiLimiter } from '../middleware/rateLimiter';
 import { supabase } from '../db/client';
+import { getRoutePath } from '../services/routePath';
 
 export const routesRouter = Router();
 routesRouter.use(apiLimiter, authMiddleware);
@@ -31,6 +32,15 @@ routesRouter.get('/:id/students', async (req: Request, res: Response) => {
 
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
+});
+
+routesRouter.get('/:id/path', async (req: Request, res: Response) => {
+  try {
+    const path = await getRoutePath(req.params.id);
+    res.json(path);
+  } catch (err) {
+    res.status(404).json({ error: err instanceof Error ? err.message : 'Route path unavailable' });
+  }
 });
 
 routesRouter.post('/', async (req: Request, res: Response) => {
