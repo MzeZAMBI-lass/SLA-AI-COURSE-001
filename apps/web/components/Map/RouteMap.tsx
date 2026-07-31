@@ -4,7 +4,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import { createBrowserClient } from '@/lib/supabase-client';
-import type { RoutePath } from '@sla/shared';
+import type { RoutePath, RouteStudentSummary } from '@sla/shared';
 
 // Fix Leaflet default icon paths broken by webpack
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)['_getIconUrl'];
@@ -22,14 +22,58 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 interface StudentPin {
   student_id: string;
-  student_name?: string;
-  students?: { name: string; grade: string | null };
-  latitude?: number;
-  longitude?: number;
-  student_locations?: Array<{ latitude: number; longitude: number; road_distance_km: number | null }>;
-  route_id?: string;
-  route_name?: string;
+  student_name: string;
+  grade?: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  road_distance_km?: number | null;
+  route_id: string | null;
   estimated_pickup_time: string | null;
+}
+
+interface RawStudentLocation {
+  latitude: number;
+  longitude: number;
+  road_distance_km: number | null;
+}
+
+interface RawStudentRow {
+  id: string;
+  name: string;
+  grade: string | null;
+  student_locations?: RawStudentLocation[];
+  route_assignments?: Array<{ route_id: string; status: string; estimated_pickup_time: string | null }>;
+}
+
+/** GET /api/students returns raw student rows (used for the "all routes" view). */
+function pinsFromAllStudents(rows: RawStudentRow[]): StudentPin[] {
+  return rows.map((row) => {
+    const location = row.student_locations?.[0];
+    const active = row.route_assignments?.find((a) => a.status === 'active');
+    return {
+      student_id: row.id,
+      student_name: row.name,
+      grade: row.grade,
+      latitude: location?.latitude ?? null,
+      longitude: location?.longitude ?? null,
+      road_distance_km: location?.road_distance_km ?? null,
+      route_id: active?.route_id ?? null,
+      estimated_pickup_time: active?.estimated_pickup_time ?? null,
+    };
+  });
+}
+
+/** GET /api/routes/:id/students returns RouteStudentSummary[] (single route, so route_id is implicit). */
+function pinsFromRouteStudents(rows: RouteStudentSummary[], routeId: string): StudentPin[] {
+  return rows.map((row) => ({
+    student_id: row.student_id,
+    student_name: row.student_name,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    road_distance_km: row.road_distance_km,
+    route_id: routeId,
+    estimated_pickup_time: row.estimated_pickup_time,
+  }));
 }
 
 interface RouteMapProps {
@@ -76,7 +120,10 @@ export default function RouteMap({ selectedRouteId }: RouteMapProps) {
 
       const res = await fetch(url, { headers });
       if (!res.ok) return;
-      const data = await res.json() as StudentPin[];
+      const raw = await res.json();
+      const data: StudentPin[] = selectedRouteId
+        ? pinsFromRouteStudents(raw as RouteStudentSummary[], selectedRouteId)
+        : pinsFromAllStudents(raw as RawStudentRow[]);
       setPins(data);
 
       // Build stable colour index map
@@ -141,21 +188,18 @@ export default function RouteMap({ selectedRouteId }: RouteMapProps) {
 
       {/* Students */}
       {pins.map((pin) => {
-        const lat = pin.latitude ?? pin.student_locations?.[0]?.latitude;
-        const lon = pin.longitude ?? pin.student_locations?.[0]?.longitude;
-        if (!lat || !lon) return null;
+        if (pin.latitude === null || pin.longitude === null) return null;
 
         const colour = pin.route_id ? colourForRoute(routeIndexMap[pin.route_id] ?? 0) : '#6b7280';
-        const name = pin.student_name ?? pin.students?.name ?? 'Unknown';
-        const grade = pin.students?.grade;
-        const dist = pin.student_locations?.[0]?.road_distance_km;
 
         return (
-          <Marker key={pin.student_id} position={[lat, lon]} icon={makeIcon(colour)}>
+          <Marker key={pin.student_id} position={[pin.latitude, pin.longitude]} icon={makeIcon(colour)}>
             <Popup>
-              <strong>{name}</strong>
-              {grade && <div className="text-xs text-gray-500">Grade {grade}</div>}
-              {dist && <div className="text-xs">Distance: {dist.toFixed(1)} km</div>}
+              <strong>{pin.student_name}</strong>
+              {pin.grade && <div className="text-xs text-gray-500">Grade {pin.grade}</div>}
+              {pin.road_distance_km != null && (
+                <div className="text-xs">Distance: {pin.road_distance_km.toFixed(1)} km</div>
+              )}
               {pin.estimated_pickup_time && (
                 <div className="text-xs">Pickup: {pin.estimated_pickup_time}</div>
               )}
