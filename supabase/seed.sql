@@ -4,8 +4,8 @@
 INSERT INTO schools (id, name, latitude, longitude, address, start_time, end_time) VALUES (
   '00000000-0000-0000-0000-000000000001',
   'Silverleaf Academy',
-  -3.7321,
-  36.6858,
+  -3.342059,
+  36.878586,
   'Babati, Manyara, Tanzania',
   '07:30',
   '14:00'
