@@ -8,6 +8,7 @@ export interface Route {
   school_id: string;
   active: boolean;
   created_at: string;
+  origin_bearing_degrees?: number | null;
 }
 
 export interface School {
@@ -39,4 +40,27 @@ export interface RouteSuggestion {
   score: number;
   detour_km: number;
   current_count: number;
+}
+
+export interface LatLng {
+  latitude: number;
+  longitude: number;
+}
+
+export interface RouteLineString {
+  type: 'LineString';
+  coordinates: [number, number][]; // [lng, lat] pairs, GeoJSON order
+}
+
+export type RoutePathSource = 'ors' | 'fallback';
+
+export interface RoutePath {
+  route_id: string;
+  route_name: string;
+  origin: LatLng;
+  geometry: RouteLineString;
+  distance_km: number;
+  duration_min: number;
+  source: RoutePathSource;
+  cached_at: string;
 }
