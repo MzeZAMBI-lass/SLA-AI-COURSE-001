@@ -4,6 +4,7 @@ import { webhookRouter } from './routes/webhook';
 import { studentsRouter } from './routes/students';
 import { routesRouter } from './routes/routes';
 import { assignmentsRouter } from './routes/assignments';
+import { exportRouter } from './routes/export';
 
 const app = express();
 
@@ -20,5 +21,6 @@ app.use('/webhook', webhookRouter);
 app.use('/api/students', studentsRouter);
 app.use('/api/routes', routesRouter);
 app.use('/api/assignments', assignmentsRouter);
+app.use('/api/export', exportRouter);
 
 export default app;

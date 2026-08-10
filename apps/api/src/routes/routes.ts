@@ -34,12 +34,20 @@ routesRouter.get('/:id/students', async (req: Request, res: Response) => {
 });
 
 routesRouter.post('/', async (req: Request, res: Response) => {
-  const { route_name, bus_number, driver_name, driver_phone, capacity, school_id } =
+  const { route_name, bus_number, driver_name, driver_phone, capacity } =
     req.body as Record<string, string | number>;
+
+  const { data: school, error: schoolError } = await supabase
+    .from('schools')
+    .select('id')
+    .limit(1)
+    .single();
+
+  if (schoolError || !school) return res.status(500).json({ error: 'No school configured' });
 
   const { data, error } = await supabase
     .from('routes')
-    .insert({ route_name, bus_number, driver_name, driver_phone, capacity, school_id })
+    .insert({ route_name, bus_number, driver_name, driver_phone, capacity, school_id: school.id })
     .select()
     .single();
 

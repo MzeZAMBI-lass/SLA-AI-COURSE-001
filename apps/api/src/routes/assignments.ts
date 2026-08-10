@@ -11,8 +11,7 @@ assignmentsRouter.get('/pending', async (_req: Request, res: Response) => {
   const { data, error } = await supabase
     .from('route_assignments')
     .select(
-      `*, students(name, grade, parent_phone), routes(route_name, bus_number),
-       students!inner(student_locations(latitude, longitude, road_distance_km, travel_time_minutes, geocode_confidence))`,
+      `*, students(name, grade, parent_phone, student_locations(latitude, longitude, road_distance_km, travel_time_minutes, geocode_confidence)), routes(route_name, bus_number)`,
     )
     .eq('status', 'pending_review')
     .order('created_at', { ascending: false });
