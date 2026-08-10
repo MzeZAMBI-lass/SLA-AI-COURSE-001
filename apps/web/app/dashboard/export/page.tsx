@@ -11,6 +11,7 @@ export default function ExportPage() {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [selectedId, setSelectedId] = useState<string>('all');
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -25,21 +26,28 @@ export default function ExportPage() {
 
   async function exportCsv() {
     setExporting(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    const url = selectedId === 'all'
-      ? `${API}/api/export/csv`
-      : `${API}/api/export/csv?route_id=${selectedId}`;
+    setExportError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const url = selectedId === 'all'
+        ? `${API}/api/export/csv`
+        : `${API}/api/export/csv?route_id=${selectedId}`;
 
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${session?.access_token}` },
-    });
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
 
-    if (res.ok) {
-      const blob = await res.blob();
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `route-export-${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
+      if (res.ok) {
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `route-export-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+      } else {
+        setExportError('Download failed. Please try again.');
+      }
+    } catch {
+      setExportError('Could not reach the server. Check your connection and try again.');
     }
     setExporting(false);
   }
@@ -73,6 +81,9 @@ export default function ExportPage() {
         >
           {exporting ? 'Generating…' : 'Download CSV'}
         </button>
+        {exportError && (
+          <p className="text-sm text-red-600">{exportError}</p>
+        )}
       </div>
     </div>
   );
