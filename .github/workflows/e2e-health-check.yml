@@ -29,8 +29,8 @@ jobs:
 
           # 2. REACHABILITY CHECK
           HTTP=$(curl -s -o /dev/null -w "%{http_code}" -L --max-redirs 3 https://sla-transport.netlify.app/)
-          if [[ "$HTTP" != "200" && "$HTTP" != "301" && "$HTTP" != "302" ]]; then
-            FAILURES="${FAILURES}[FAIL] Reachability check: expected 200/301/302, got ${HTTP}\n"
+          if [[ "$HTTP" != "200" && "$HTTP" != "301" && "$HTTP" != "302" && "$HTTP" != "307" && "$HTTP" != "308" ]]; then
+            FAILURES="${FAILURES}[FAIL] Reachability check: expected 2xx/3xx, got ${HTTP}\n"
           else
             echo "Reachability check: OK (HTTP $HTTP)"
           fi
