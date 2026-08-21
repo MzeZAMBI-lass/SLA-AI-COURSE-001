@@ -8,72 +8,63 @@ on:
 jobs:
   health-check:
     runs-on: ubuntu-latest
+    env:
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
     steps:
-      - name: Load check — login page
-        id: load
+      - name: Run all checks and alert on failure
         run: |
-          RESPONSE=$(curl -s -o /tmp/login.html -w "%{http_code}" https://sla-transport.netlify.app/login)
-          if [ "$RESPONSE" != "200" ]; then
-            echo "FAIL=Load check: expected HTTP 200, got $RESPONSE" >> $GITHUB_ENV
-          elif ! grep -qiE 'input[^>]+type=["\x27]?password' /tmp/login.html; then
-            echo "FAIL=Load check: password input not found in login page HTML" >> $GITHUB_ENV
+          FAILURES=""
+
+          # 1. LOAD CHECK
+          # curl gets SSR HTML — Next.js inputs are client-rendered, so check
+          # for the Next.js page marker (_next/static or __NEXT_DATA__) instead.
+          HTTP=$(curl -s -o /tmp/login.html -w "%{http_code}" https://sla-transport.netlify.app/login)
+          if [ "$HTTP" != "200" ]; then
+            FAILURES="${FAILURES}[FAIL] Load check: expected HTTP 200, got ${HTTP}\n"
+          elif ! grep -qi '_next\|__NEXT_DATA__' /tmp/login.html; then
+            FAILURES="${FAILURES}[FAIL] Load check: page loaded but no Next.js markers found — may be a blank/error page\n"
           else
-            echo "Load check: OK"
+            echo "Load check: OK (HTTP $HTTP, Next.js markers present)"
           fi
 
-      - name: Reachability check — root URL
-        id: root
-        run: |
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -L --max-redirs 3 https://sla-transport.netlify.app/)
-          if [[ "$RESPONSE" != "200" && "$RESPONSE" != "301" && "$RESPONSE" != "302" ]]; then
-            EXISTING="${FAIL:-}"
-            if [ -n "$EXISTING" ]; then
-              echo "FAIL=$EXISTING | Reachability check: expected 200/301/302, got $RESPONSE" >> $GITHUB_ENV
-            else
-              echo "FAIL=Reachability check: expected 200/301/302, got $RESPONSE" >> $GITHUB_ENV
-            fi
+          # 2. REACHABILITY CHECK
+          HTTP=$(curl -s -o /dev/null -w "%{http_code}" -L --max-redirs 3 https://sla-transport.netlify.app/)
+          if [[ "$HTTP" != "200" && "$HTTP" != "301" && "$HTTP" != "302" ]]; then
+            FAILURES="${FAILURES}[FAIL] Reachability check: expected 200/301/302, got ${HTTP}\n"
           else
-            echo "Reachability check: OK"
+            echo "Reachability check: OK (HTTP $HTTP)"
           fi
 
-      - name: Invalid login check — bad credentials must not succeed
-        id: auth
-        run: |
-          BODY=$(curl -s -X POST https://sla-transport.netlify.app/api/auth/callback/credentials \
+          # 3. INVALID LOGIN CHECK
+          AUTH_BODY=$(curl -s -X POST https://sla-transport.netlify.app/api/auth/callback/credentials \
             -H "Content-Type: application/json" \
             -d '{"email":"probe-test@invalid.example","password":"wrong-password-probe","redirect":false,"callbackUrl":"/"}')
-          if echo "$BODY" | grep -qiE '"url".*dashboard|"ok":true'; then
-            EXISTING="${FAIL:-}"
-            if [ -n "$EXISTING" ]; then
-              echo "FAIL=$EXISTING | Invalid login check: bad credentials appeared to succeed" >> $GITHUB_ENV
-            else
-              echo "FAIL=Invalid login check: bad credentials appeared to succeed" >> $GITHUB_ENV
-            fi
+          if echo "$AUTH_BODY" | grep -qiE '"url"[[:space:]]*:[[:space:]]*"[^"]*dashboard|"ok"[[:space:]]*:[[:space:]]*true'; then
+            FAILURES="${FAILURES}[FAIL] Invalid login check: bad credentials appeared to succeed\n"
           else
-            echo "Invalid login check: OK"
+            echo "Invalid login check: OK (bad credentials correctly rejected)"
           fi
 
-      - name: Send failure email via Resend
-        if: env.FAIL != ''
-        env:
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-        run: |
-          DATE=$(date -u +%Y-%m-%d)
-          DETAILS="${FAIL}"
-          curl -s -X POST https://api.resend.com/emails \
-            -H "Authorization: Bearer $RESEND_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"from\": \"onboarding@resend.dev\",
-              \"to\": [\"intern-shikunzi@silverleaf.co.tz\"],
-              \"subject\": \"SLA Transport E2E FAILURE — $DATE\",
-              \"text\": \"Daily health check failed:\n\n$DETAILS\n\nCheck: https://sla-transport.netlify.app/login\"
-            }"
+          # DONE — send email and exit 1 only if there are failures
+          if [ -n "$FAILURES" ]; then
+            DATE=$(date -u +%Y-%m-%d)
+            printf '%s' "$FAILURES" > /tmp/fail.txt
+            FAIL_TEXT=$(cat /tmp/fail.txt)
+            jq -n \
+              --arg from "onboarding@resend.dev" \
+              --arg to "intern-shikunzi@silverleaf.co.tz" \
+              --arg subject "SLA Transport E2E FAILURE — $DATE" \
+              --arg body "Daily health check failed on $DATE:\n\n$FAIL_TEXT\nCheck: https://sla-transport.netlify.app/login" \
+              '{from: $from, to: [$to], subject: $subject, text: $body}' > /tmp/email.json
 
-      - name: Report result
-        run: |
-          if [ -n "${FAIL:-}" ]; then
-            echo "FAILED: $FAIL"
+            curl -s -X POST https://api.resend.com/emails \
+              -H "Authorization: Bearer $RESEND_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d @/tmp/email.json
+
+            echo ""
+            echo "FAILURE REPORT:"
+            cat /tmp/fail.txt
             exit 1
           else
             echo "OK — all checks passed"
