@@ -1,0 +1,80 @@
+name: SLA Transport E2E Health Check
+
+on:
+  schedule:
+    - cron: '0 8 * * *'   # 08:00 UTC = 10:00 AM SAST daily
+  workflow_dispatch:        # allow manual trigger for testing
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Load check — login page
+        id: load
+        run: |
+          RESPONSE=$(curl -s -o /tmp/login.html -w "%{http_code}" https://sla-transport.netlify.app/login)
+          if [ "$RESPONSE" != "200" ]; then
+            echo "FAIL=Load check: expected HTTP 200, got $RESPONSE" >> $GITHUB_ENV
+          elif ! grep -qiE 'input[^>]+type=["\x27]?password' /tmp/login.html; then
+            echo "FAIL=Load check: password input not found in login page HTML" >> $GITHUB_ENV
+          else
+            echo "Load check: OK"
+          fi
+
+      - name: Reachability check — root URL
+        id: root
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -L --max-redirs 3 https://sla-transport.netlify.app/)
+          if [[ "$RESPONSE" != "200" && "$RESPONSE" != "301" && "$RESPONSE" != "302" ]]; then
+            EXISTING="${FAIL:-}"
+            if [ -n "$EXISTING" ]; then
+              echo "FAIL=$EXISTING | Reachability check: expected 200/301/302, got $RESPONSE" >> $GITHUB_ENV
+            else
+              echo "FAIL=Reachability check: expected 200/301/302, got $RESPONSE" >> $GITHUB_ENV
+            fi
+          else
+            echo "Reachability check: OK"
+          fi
+
+      - name: Invalid login check — bad credentials must not succeed
+        id: auth
+        run: |
+          BODY=$(curl -s -X POST https://sla-transport.netlify.app/api/auth/callback/credentials \
+            -H "Content-Type: application/json" \
+            -d '{"email":"probe-test@invalid.example","password":"wrong-password-probe","redirect":false,"callbackUrl":"/"}')
+          if echo "$BODY" | grep -qiE '"url".*dashboard|"ok":true'; then
+            EXISTING="${FAIL:-}"
+            if [ -n "$EXISTING" ]; then
+              echo "FAIL=$EXISTING | Invalid login check: bad credentials appeared to succeed" >> $GITHUB_ENV
+            else
+              echo "FAIL=Invalid login check: bad credentials appeared to succeed" >> $GITHUB_ENV
+            fi
+          else
+            echo "Invalid login check: OK"
+          fi
+
+      - name: Send failure email via Resend
+        if: env.FAIL != ''
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          DETAILS="${FAIL}"
+          curl -s -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer $RESEND_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"from\": \"onboarding@resend.dev\",
+              \"to\": [\"intern-shikunzi@silverleaf.co.tz\"],
+              \"subject\": \"SLA Transport E2E FAILURE — $DATE\",
+              \"text\": \"Daily health check failed:\n\n$DETAILS\n\nCheck: https://sla-transport.netlify.app/login\"
+            }"
+
+      - name: Report result
+        run: |
+          if [ -n "${FAIL:-}" ]; then
+            echo "FAILED: $FAIL"
+            exit 1
+          else
+            echo "OK — all checks passed"
+          fi
